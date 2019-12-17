@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	"github.com/gruntwork-io/terratest/modules/collections"
 )
 
 // TerraformDefaultLockingStatus - The terratest default command lock status (backwards compatibility)
@@ -23,7 +25,7 @@ var TerraformCommandsWithLockSupport = []string{
 func FormatArgs(options *Options, args ...string) []string {
 	var terraformArgs []string
 	commandType := args[0]
-	lockSupported := sliceContains(TerraformCommandsWithLockSupport, commandType)
+	lockSupported := collections.ListContains(TerraformCommandsWithLockSupport, commandType)
 
 	terraformArgs = append(terraformArgs, args...)
 	terraformArgs = append(terraformArgs, FormatTerraformVarsAsArgs(options.Vars)...)
