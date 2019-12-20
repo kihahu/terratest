@@ -201,13 +201,3 @@ func primitiveToHclString(value interface{}, isNested bool) string {
 		return fmt.Sprintf("%v", v)
 	}
 }
-
-// Check whether string exists in a slice
-func sliceContains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
