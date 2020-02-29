@@ -96,10 +96,13 @@ func TestHelmBasicExampleDeployment(t *testing.T) {
 	// Sleep for 2 seconds to allow pod to be setup
 	time.Sleep(2 * time.Second)
 
+	// Create tunnel object
 	testTunnel := k8s.NewTunnel(pkubectlOptions, kubeResourceT, serviceName, 8080, 80)
 
+	// Portforward service
 	testTunnel.ForwardPort(t)
 
+	// Endpoint to access the service
 	endpoint := "localhost:8080"
 
 	// Test the endpoint for up to 5 minutes. This will only fail if we timeout waiting for the service to return a 200
