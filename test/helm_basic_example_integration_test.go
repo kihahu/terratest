@@ -42,6 +42,12 @@ func TestHelmBasicExampleDeployment(t *testing.T) {
 	// - Current context of the kubectl config file
 	kubectlOptions := k8s.NewKubectlOptions("", "", namespaceName)
 
+	pkubectlOptions := &k8s.KubectlOptions{
+		Namespace: namespaceName,
+	}
+
+	kubeResourceT := k8s.ResourceTypeService
+
 	k8s.CreateNamespace(t, kubectlOptions, namespaceName)
 	// ... and make sure to delete the namespace at the end of the test
 	defer k8s.DeleteNamespace(t, kubectlOptions, namespaceName)
@@ -64,7 +70,7 @@ func TestHelmBasicExampleDeployment(t *testing.T) {
 		"nginx-service-%s",
 		strings.ToLower(random.UniqueId()),
 	)
-	defer helm.Delete(t, options, releaseName, true)
+	// defer helm.Delete(t, options, releaseName, true)
 
 	// Deploy the chart using `helm install`. Note that we use the version without `E`, since we want to assert the
 	// install succeeds without any errors.
@@ -81,11 +87,20 @@ func TestHelmBasicExampleDeployment(t *testing.T) {
 	k8s.WaitUntilServiceAvailable(t, kubectlOptions, serviceName, 10, 1*time.Second)
 
 	// Now we verify that the service will successfully boot and start serving requests
-	service := k8s.GetService(t, kubectlOptions, serviceName)
-	endpoint := k8s.GetServiceEndpoint(t, kubectlOptions, service, 80)
+	k8s.GetService(t, kubectlOptions, serviceName)
+	// endpoint := k8s.GetServiceEndpoint(t, kubectlOptions, service, 80)
 
 	// Setup a TLS configuration to submit with the helper, a blank struct is acceptable
 	tlsConfig := tls.Config{}
+
+	// Sleep for 2 seconds to allow pod to be setup
+	time.Sleep(2 * time.Second)
+
+	testTunnel := k8s.NewTunnel(pkubectlOptions, kubeResourceT, serviceName, 8080, 80)
+
+	testTunnel.ForwardPort(t)
+
+	endpoint := "localhost:8080"
 
 	// Test the endpoint for up to 5 minutes. This will only fail if we timeout waiting for the service to return a 200
 	// response.
@@ -99,4 +114,6 @@ func TestHelmBasicExampleDeployment(t *testing.T) {
 			return statusCode == 200
 		},
 	)
+
+	testTunnel.Close()
 }
