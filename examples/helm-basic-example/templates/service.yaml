@@ -3,8 +3,6 @@ kind: Service
 metadata:
   name: {{ include "helm-basic-example.fullname" . }}
   labels:
-    # These labels are required by helm. You can read more about required labels in the chart best practices guide:
-    # https://docs.helm.sh/chart_best_practices/#standard-labels
     helm.sh/chart: {{ include "helm-basic-example.chart" . }}
     app.kubernetes.io/name: {{ include "helm-basic-example.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
@@ -18,3 +16,23 @@ spec:
   - protocol: TCP
     targetPort: 80
     port: 80
+# ---
+#   apiVersion: extensions/v1beta1
+#   kind: Ingress
+#   metadata:
+#     name: example-ingress
+#     annotations:
+#       ingress.kubernetes.io/rewrite-target: /
+#   spec:
+#     rules:
+#     - http:
+#         paths:
+#         - path: /
+#           backend:
+#             serviceName: {{ include "helm-basic-example.fullname" . }}
+#             servicePort: 80
+#         - path: /bar
+#           backend:
+#             serviceName: bar-service
+#             servicePort: 80
+# # ---

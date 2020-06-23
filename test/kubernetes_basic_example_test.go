@@ -9,13 +9,16 @@
 package test
 
 import (
+	"crypto/tls"
 	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
+	http_helper "github.com/gruntwork-io/terratest/modules/http-helper"
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
 )
@@ -39,6 +42,7 @@ func TestKubernetesBasicExample(t *testing.T) {
 	// - Current context of the kubectl config file
 	// - Random namespace
 	options := k8s.NewKubectlOptions("", "", namespaceName)
+	kubeResourceT := k8s.ResourceTypePod
 
 	k8s.CreateNamespace(t, options, namespaceName)
 	// website::tag::5::Make sure to delete the namespace at the end of the test
@@ -54,6 +58,39 @@ func TestKubernetesBasicExample(t *testing.T) {
 	// website::tag::4::Check if NGINX service was deployed successfully.
 	// This will get the service resource and verify that it exists and was retrieved successfully. This function will
 	// fail the test if the there is an error retrieving the service resource from Kubernetes.
-	service := k8s.GetService(t, options, "nginx-service")
-	require.Equal(t, service.Name, "nginx-service")
+	// service := k8s.GetService(t, options, "nginx-service")
+	// require.Equal(t, service.Name, "nginx-service")
+
+	// k8s.GetService(t, kubectlOptions, serviceName)
+	// endpoint := k8s.GetServiceEndpoint(t, kubectlOptions, service, 80)
+
+	// Setup a TLS configuration to submit with the helper, a blank struct is acceptable
+	tlsConfig := tls.Config{}
+
+	// Sleep for 2 seconds to allow pod to be setup
+	time.Sleep(10 * time.Second)
+
+	// Create tunnel object
+	testTunnel := k8s.NewTunnel(options, kubeResourceT, "nginx-deployment", 8080, 80)
+
+	// Portforward service
+	testTunnel.ForwardPort(t)
+
+	// Endpoint to access the service
+	endpoint := "localhost:8080"
+
+	// Test the endpoint for up to 5 minutes. This will only fail if we timeout waiting for the service to return a 200
+	// response.
+	http_helper.HttpGetWithRetryWithCustomValidation(
+		t,
+		fmt.Sprintf("http://%s", endpoint),
+		&tlsConfig,
+		30,
+		10*time.Second,
+		func(statusCode int, body string) bool {
+			return statusCode == 200
+		},
+	)
+
+	testTunnel.Close()
 }

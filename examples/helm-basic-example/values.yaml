@@ -2,7 +2,7 @@
 # Note that the following two values must be specified if you wish to deploy this chart:
 
 # containerImageRepo is a string that describes the image repository to pull the container image from.
-# containerImageRepo: nginx
+containerImageRepo: nginx
 
 # containerImageTag is a string that describes the image tag to use when pulling the container image.
-# containerImageTag: v1.15.4
+containerImageTag: v1.15.4

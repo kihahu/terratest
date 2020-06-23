@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	// rand "github.com/alok87/goutils/pkg/random"
 
 	"github.com/gruntwork-io/terratest/modules/helm"
 	http_helper "github.com/gruntwork-io/terratest/modules/http-helper"
@@ -47,6 +48,8 @@ func TestHelmBasicExampleDeployment(t *testing.T) {
 	}
 
 	kubeResourceT := k8s.ResourceTypeService
+
+	// randomPort := rand.Int()
 
 	k8s.CreateNamespace(t, kubectlOptions, namespaceName)
 	// ... and make sure to delete the namespace at the end of the test
@@ -94,7 +97,7 @@ func TestHelmBasicExampleDeployment(t *testing.T) {
 	tlsConfig := tls.Config{}
 
 	// Sleep for 2 seconds to allow pod to be setup
-	time.Sleep(2 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	// Create tunnel object
 	testTunnel := k8s.NewTunnel(pkubectlOptions, kubeResourceT, serviceName, 8080, 80)

@@ -56,10 +56,23 @@ func TestKubernetesBasicExampleServiceCheck(t *testing.T) {
 
 	// Now we verify that the service will successfully boot and start serving requests
 	service := k8s.GetService(t, options, "nginx-service")
-	endpoint := k8s.GetServiceEndpoint(t, options, service, 80)
+	// endpoint := k8s.GetServiceEndpoint(t, options, service, 80)
+	tlsConfig := tls.Config{}
+
+	// Sleep for 2 seconds to allow pod to be setup
+	time.Sleep(10 * time.Second)
+
+	// Create tunnel object
+	kubeResourceT := k8s.ResourceTypeService
+	testTunnel := k8s.NewTunnel(options, kubeResourceT, service.Name, 8080, 80)
+
+	// Portforward service
+	testTunnel.ForwardPort(t)
+
+	// Endpoint to access the service
+	endpoint := "localhost:8080"
 
 	// Setup a TLS configuration to submit with the helper, a blank struct is acceptable
-	tlsConfig := tls.Config{}
 
 	// Test the endpoint for up to 5 minutes. This will only fail if we timeout waiting for the service to return a 200
 	// response.
@@ -73,4 +86,6 @@ func TestKubernetesBasicExampleServiceCheck(t *testing.T) {
 			return statusCode == 200
 		},
 	)
+	// close the tunnel
+	testTunnel.Close()
 }
